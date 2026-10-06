@@ -92,6 +92,13 @@ contains one of the fragments:
 List only code that instantiates or calls on behalf of its caller. Everything else stays subject to PHPUnit's own
 classification.
 
+When a file also contains code of its own, name the single method instead, as `Fqcn::method`. Only frames that run
+inside that method count as pass-through code then:
+
+```xml
+<parameter name="passThroughPaths" value="/vendor/acme/container/,Acme\Testing\TestCase::get"/>
+```
+
 The extension does nothing when `ignoreIndirectDeprecations` is off: PHPUnit reports every deprecation then.
 
 A deprecation reported this way is a regular deprecation: `failOnDeprecation`,
