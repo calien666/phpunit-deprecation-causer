@@ -133,12 +133,17 @@ When a framework executes project code from files it generated, such as a cache 
 files of several packages, the integration passes a `GeneratedFileMapper` as fourth argument. It maps such a file and
 line back to the file the code came from, and PHPUnit then classifies that file.
 
+Some deprecations name their cause only in the message, for instance when a framework migrates the configuration of
+a project at runtime and no frame of the project is on the stack. A `MessageCauseResolver`, passed as fifth argument,
+names the causing file from the message; `FirstPartyCode::fromConfiguration()` gives it the `<source>` directories
+and tells whether a file belongs to the project, so third-party configuration stays suppressed.
+
 ## Limitations
 
 - **Resolution started by third-party code** is not attributed: when a framework instantiates your service and that
   service needs a deprecated dependency, no frame of your code is on the stack.
 - **Deprecations about configuration**, such as a framework migrating your configuration at runtime, carry no frame
-  of your code either. Attributing them needs framework knowledge and belongs into a framework integration.
+  of your code either. A framework integration can attribute them with a `MessageCauseResolver`.
 - **Native PHP deprecations** (`E_DEPRECATED`) are left to PHPUnit; only `E_USER_DEPRECATED` is handled.
 - **Tests in separate processes** are not covered: the extension is not bootstrapped in the child process.
 - PHPUnit 12 offers no issue trigger resolvers, so the extension reports the deprecation again from an event
