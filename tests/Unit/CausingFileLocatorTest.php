@@ -6,6 +6,7 @@ namespace Calien\PhpUnitDeprecationCauser\Tests\Unit;
 
 use Calien\PhpUnitDeprecationCauser\CausingFileLocator;
 use Calien\PhpUnitDeprecationCauser\GeneratedFileMapper;
+use Calien\PhpUnitDeprecationCauser\MessageCauseResolver;
 use Calien\PhpUnitDeprecationCauser\PassThroughPaths;
 use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -115,6 +116,90 @@ final class CausingFileLocatorTest extends TestCase
             ],
             'expected' => null,
         ];
+    }
+
+    /**
+     * @param list<StackFrame> $trace
+     */
+    #[Test]
+    #[DataProvider('messageTraceProvider')]
+    public function asksMessageCauseResolversWhenTheTraceNamesNoCause(array $trace, string $message, ?string $expected): void
+    {
+        $resolver = new class implements MessageCauseResolver {
+            public function causingFile(string $message): ?string
+            {
+                return str_contains($message, 'project item') ? '/app/config/project.php' : null;
+            }
+        };
+        $subject = new CausingFileLocator(new PassThroughPaths(['/vendor/acme/container/']), [], [$resolver]);
+
+        self::assertSame($expected, $subject->causingFile($trace, $message));
+    }
+
+    public static function messageTraceProvider(): Generator
+    {
+        yield 'message names first-party configuration' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Migration.php'],
+                ['function' => 'migrate', 'file' => '/app/vendor/acme/lib/Kernel.php'],
+            ],
+            'message' => 'Migrated project item.',
+            'expected' => '/app/config/project.php',
+        ];
+        yield 'message names nothing first-party' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Migration.php'],
+                ['function' => 'migrate', 'file' => '/app/vendor/acme/lib/Kernel.php'],
+            ],
+            'message' => 'Migrated vendor item.',
+            'expected' => null,
+        ];
+        yield 'trace names the cause first' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
+                ['function' => '__construct', 'file' => '/app/vendor/acme/container/Container.php'],
+                ['function' => 'get', 'file' => '/app/src/Project.php'],
+            ],
+            'message' => 'Migrated project item.',
+            'expected' => '/app/src/Project.php',
+        ];
+    }
+
+    #[Test]
+    public function resolvesSymbolicLinksOfFilesNamedByMappersAndResolvers(): void
+    {
+        $link = sys_get_temp_dir() . '/phpunit-deprecation-causer-' . bin2hex(random_bytes(4)) . '.php';
+        symlink(__FILE__, $link);
+        $mapper = new class ($link) implements GeneratedFileMapper {
+            public function __construct(private readonly string $link) {}
+
+            public function sourceFile(string $file, int $line): ?string
+            {
+                return $file === '/app/var/cache/compiled.php' && $this->link !== '' ? $this->link : null;
+            }
+        };
+        $resolver = new class ($link) implements MessageCauseResolver {
+            public function __construct(private readonly string $link) {}
+
+            public function causingFile(string $message): ?string
+            {
+                return $this->link !== '' ? $this->link : null;
+            }
+        };
+        $subject = new CausingFileLocator(new PassThroughPaths(['/vendor/acme/container/']), [$mapper], [$resolver]);
+
+        $mapped = $subject->causingFile([
+            ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
+            ['function' => 'deprecated', 'file' => '/app/var/cache/compiled.php', 'line' => 12],
+        ]);
+        $resolved = $subject->causingFile([
+            ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Migration.php'],
+            ['function' => 'migrate', 'file' => '/app/vendor/acme/lib/Kernel.php'],
+        ], 'Migrated project item.');
+        unlink($link);
+
+        self::assertSame(__FILE__, $mapped);
+        self::assertSame(__FILE__, $resolved);
     }
 
     public static function traceProvider(): Generator

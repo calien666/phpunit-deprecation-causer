@@ -22,16 +22,20 @@ final class DeprecationCauserRegistrar
      * integration calls it alike.
      *
      * @param list<GeneratedFileMapper> $generatedFileMappers
+     * @param list<MessageCauseResolver> $messageCauseResolvers
      */
     public function register(
         Configuration $configuration,
         Facade $facade,
         PassThroughPaths $passThroughPaths,
         array $generatedFileMappers = [],
+        array $messageCauseResolvers = [],
     ): void {
         if (!$configuration->source()->ignoreIndirectDeprecations()) {
             return;
         }
-        IssueTriggerResolver::register(new CausingFileLocator($passThroughPaths, $generatedFileMappers));
+        IssueTriggerResolver::register(
+            new CausingFileLocator($passThroughPaths, $generatedFileMappers, $messageCauseResolvers),
+        );
     }
 }
