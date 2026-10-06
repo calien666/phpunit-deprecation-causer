@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\Scenarios;
 
+use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\Generated\GeneratedProjectCode;
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\Project\ProjectCode;
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\DeprecatedService;
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\Infrastructure\Container;
@@ -71,6 +72,13 @@ final class DeprecationScenarios extends TestCase
     {
         $this->expectNotToPerformAssertions();
         (new ProjectCode())->instantiateWithoutDeprecation();
+    }
+
+    #[Test]
+    public function generatedProjectCodeInstantiatesDeprecatedDirectly(): void
+    {
+        $this->expectNotToPerformAssertions();
+        (new GeneratedProjectCode())->instantiateDeprecatedDirectly();
     }
 
     #[Test]
