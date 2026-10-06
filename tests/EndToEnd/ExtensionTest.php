@@ -60,6 +60,35 @@ final class ExtensionTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('integrationScenarioProvider')]
+    public function frameworkIntegrationReportsDeprecationsCausedByFirstPartyCode(
+        string $scenario,
+        int $expectedDeprecations,
+    ): void {
+        [$exitCode, $output] = $this->runScenario('integration', $scenario);
+
+        self::assertMatchesRegularExpression('/^OK \(1 test|^Tests: 1,/m', $output, $output);
+        self::assertSame($expectedDeprecations, $this->reportedDeprecations($output), $output);
+        self::assertSame($expectedDeprecations > 0 ? 1 : 0, $exitCode, $output);
+    }
+
+    public static function integrationScenarioProvider(): Generator
+    {
+        yield 'pass-through code of the integration' => [
+            'scenario' => 'projectInstantiatesDeprecatedThroughContainer',
+            'expectedDeprecations' => 1,
+        ];
+        yield 'generated file mapped to first-party code' => [
+            'scenario' => 'generatedProjectCodeInstantiatesDeprecatedDirectly',
+            'expectedDeprecations' => 1,
+        ];
+        yield 'third-party code' => [
+            'scenario' => 'thirdPartyInstantiatesDeprecatedThroughContainer',
+            'expectedDeprecations' => 0,
+        ];
+    }
+
+    #[Test]
     public function expectedDeprecationCausedByFirstPartyCodeDoesNotFailTheRun(): void
     {
         [$exitCode, $output] = $this->runScenario('ignoring-indirect', 'expectedDeprecationThroughContainer');
