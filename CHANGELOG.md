@@ -28,3 +28,7 @@
   * Every push and pull request runs code style, linting, composer validation and the BOM check, and the tests for
     the lowest and the newest release of PHPUnit 11, 12 and 13, plus each major on PHP 8.5.
   * `-s composerUpdateMin` installs the lowest releases of the selected PHPUnit major.
+* [DOCS] Document usage, limitations and development
+  * `README.md` covers the problem, requirements, configuration, the integration point for frameworks and the known
+    limitations.
+  * `DEVELOPERS.md` covers the runner, the test matrix, how both PHPUnit paths work and the end-to-end fixtures.
