@@ -17,13 +17,20 @@ use PHPUnit\TextUI\Configuration\Configuration;
  */
 final class DeprecationCauserRegistrar
 {
-    public function register(Configuration $configuration, Facade $facade, PassThroughPaths $passThroughPaths): void
-    {
+    /**
+     * @param list<GeneratedFileMapper> $generatedFileMappers
+     */
+    public function register(
+        Configuration $configuration,
+        Facade $facade,
+        PassThroughPaths $passThroughPaths,
+        array $generatedFileMappers = [],
+    ): void {
         if (!$configuration->source()->ignoreIndirectDeprecations()) {
             return;
         }
         $facade->registerSubscriber(new IndirectDeprecationReclassifier(
-            new CausingFileLocator($passThroughPaths),
+            new CausingFileLocator($passThroughPaths, $generatedFileMappers),
             new ErrorHandlerTrace($configuration->source()->deprecationTriggers()),
         ));
     }
