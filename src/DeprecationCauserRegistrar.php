@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Calien\PhpUnitDeprecationCauser;
 
 use PHPUnit\Runner\Extension\Facade;
-use PHPUnit\Runner\IssueTriggerResolver\Resolver;
 use PHPUnit\TextUI\Configuration\Configuration;
 
 /**
@@ -23,13 +22,8 @@ final class DeprecationCauserRegistrar
         if (!$configuration->source()->ignoreIndirectDeprecations()) {
             return;
         }
-        $causingFileLocator = new CausingFileLocator($passThroughPaths);
-        if (interface_exists(Resolver::class)) {
-            IssueTriggerResolver::register($causingFileLocator);
-            return;
-        }
         $facade->registerSubscriber(new IndirectDeprecationReclassifier(
-            $causingFileLocator,
+            new CausingFileLocator($passThroughPaths),
             new ErrorHandlerTrace($configuration->source()->deprecationTriggers()),
         ));
     }
