@@ -1,0 +1,12 @@
+name: tests phpunit 12
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dummy:
+    name: "dummy phpunit 12 (disabled on main) to allow creation of badges for other branches"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v6
