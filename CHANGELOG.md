@@ -42,3 +42,6 @@
     `testphpunit13.yml` runs on pull requests with the lowest and newest dependencies on PHP 8.4 and the newest on
     PHP 8.5. `testphpunit11.yml` and `testphpunit12.yml` are dummies on `main`; their real counterparts live on the
     version branches.
+* [TASK] Ignore only repository-related paths
+  * `prototype/` and `HANDOVER.md` are no longer listed, they live outside of the repository now.
+  * `.idea/` stays ignored and `.vscode/` is ignored as well, so IDE settings of contributors never reach a commit.
