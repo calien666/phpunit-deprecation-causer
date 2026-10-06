@@ -1,0 +1,8 @@
+/.cache/
+/bin/
+/vendor/
+/composer.lock
+/.php-cs-fixer.cache
+/.idea/
+/prototype/
+/HANDOVER.md
