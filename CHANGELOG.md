@@ -32,3 +32,5 @@
   * `README.md` covers the problem, requirements, configuration, the integration point for frameworks and the known
     limitations.
   * `DEVELOPERS.md` covers the runner, the test matrix, how both PHPUnit paths work and the end-to-end fixtures.
+* [TASK] Add the GPL-2.0 license text
+  * `LICENSE` carries the full license text for the `GPL-2.0-or-later` declared in `composer.json`.
