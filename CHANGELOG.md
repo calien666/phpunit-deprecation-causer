@@ -41,3 +41,6 @@
   * `runTests.sh` drops the PHPUnit major switch `-U`, PHPStan uses a single configuration, and the workflow
     `testphpunit11.yml` runs on pull requests with the lowest and newest dependencies on PHP 8.2 and the newest on
     PHP 8.5.
+* [TASK] Ignore only repository-related paths
+  * `prototype/` and `HANDOVER.md` are no longer listed, they live outside of the repository now.
+  * `.idea/` stays ignored and `.vscode/` is ignored as well, so IDE settings of contributors never reach a commit.
