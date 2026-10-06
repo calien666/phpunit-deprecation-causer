@@ -23,13 +23,17 @@ The same applies to a service of yours that gets a deprecated service injected. 
 configured pass-through files and lets PHPUnit classify the first frame behind them instead. If that frame is
 first-party code (inside `<source>`) or the test itself, PHPUnit reports the deprecation as one your code caused.
 
-## Requirements
+## Versions
 
-| PHPUnit                | PHP     |
-| :--------------------- | :------ |
-| 11.5.54 and later 11.5 | 8.2–8.5 |
-| 12.5.13 and later 12.5 | 8.3–8.5 |
-| 13.0.4 and later 13    | 8.4–8.5 |
+Each major of this package supports one PHPUnit major:
+
+| Package | PHPUnit                | PHP     | Branch |
+| :------ | :--------------------- | :------ | :----- |
+| 13.x    | 13.1 and later         | 8.4–8.5 | `main` |
+| 12.x    | 12.5.13 and later 12.5 | 8.3–8.5 | `12`   |
+| 11.x    | 11.5.54 and later 11.5 | 8.2–8.5 | `11`   |
+
+The configuration and the integration point are the same in all of them.
 
 ## Installation
 
@@ -98,9 +102,8 @@ final class AcmeFrameworkExtension implements Extension
   of your code either. Attributing them needs framework knowledge and belongs into a framework integration.
 - **Native PHP deprecations** (`E_DEPRECATED`) are left to PHPUnit; only `E_USER_DEPRECATED` is handled.
 - **Tests in separate processes** are not covered: the extension is not bootstrapped in the child process.
-- Before PHPUnit 13.1, the extension reports the deprecation again from an event subscriber through PHPUnit's
-  internal event emitter. From 13.1 on it uses PHPUnit's issue trigger resolvers, which also make PHPUnit pass call
-  arguments into the stack traces it collects for deprecations.
+- PHPUnit 12 offers no issue trigger resolvers, so the extension reports the deprecation again from an event
+  subscriber through PHPUnit's internal event emitter. That call can change in a minor PHPUnit release.
 
 ## Development
 
