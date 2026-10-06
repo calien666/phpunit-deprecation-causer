@@ -49,3 +49,6 @@
   * A compatibility table names the branch, state, version, PHPUnit and PHP range of every package major, as in
     deepltranslate-core, next to badges and the URLs of the repository, Packagist, issues and releases.
   * The installation names the constraint for each PHPUnit major.
+* [FEATURE] Treat single methods as pass-through code
+  * An entry `Fqcn::method` in the pass-through paths names one method instead of a whole file; only frames running
+    inside that method are skipped, so other code of the same file keeps its own classification.

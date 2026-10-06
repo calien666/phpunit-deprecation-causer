@@ -88,4 +88,52 @@ final class PassThroughPathsTest extends TestCase
         self::assertTrue($subject->matches('/app/vendor/acme/factory/src/Factory.php'));
         self::assertTrue($subject->matches('/app/vendor/acme/container/src/Container.php'));
     }
+
+    #[Test]
+    #[DataProvider('methodProvider')]
+    public function matchesConfiguredMethods(string $passThroughPaths, ?string $class, string $function, bool $expected): void
+    {
+        $subject = PassThroughPaths::fromParameters(ParameterCollection::fromArray([
+            'passThroughPaths' => $passThroughPaths,
+        ]));
+
+        self::assertSame($expected, $subject->matchesMethod($class, $function));
+    }
+
+    public static function methodProvider(): Generator
+    {
+        yield 'configured method' => [
+            'passThroughPaths' => '/vendor/acme/factory/,Acme\\Testing\\TestCase::get',
+            'class' => 'Acme\\Testing\\TestCase',
+            'function' => 'get',
+            'expected' => true,
+        ];
+        yield 'configured method with leading backslash' => [
+            'passThroughPaths' => '\\Acme\\Testing\\TestCase::get',
+            'class' => 'Acme\\Testing\\TestCase',
+            'function' => 'get',
+            'expected' => true,
+        ];
+        yield 'other method of the class' => [
+            'passThroughPaths' => 'Acme\\Testing\\TestCase::get',
+            'class' => 'Acme\\Testing\\TestCase',
+            'function' => 'setUp',
+            'expected' => false,
+        ];
+        yield 'function without class' => [
+            'passThroughPaths' => 'Acme\\Testing\\TestCase::get',
+            'class' => null,
+            'function' => 'get',
+            'expected' => false,
+        ];
+    }
+
+    #[Test]
+    public function methodIsNoFilePath(): void
+    {
+        $subject = new PassThroughPaths(['Acme\\Testing\\TestCase::get']);
+
+        self::assertFalse($subject->isEmpty());
+        self::assertFalse($subject->matches('/app/vendor/acme/testing/src/TestCase.php'));
+    }
 }
