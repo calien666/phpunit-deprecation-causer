@@ -4,5 +4,4 @@
 /composer.lock
 /.php-cs-fixer.cache
 /.idea/
-/prototype/
-/HANDOVER.md
+/.vscode/
