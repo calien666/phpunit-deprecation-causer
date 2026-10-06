@@ -45,3 +45,7 @@
 * [TASK] Ignore only repository-related paths
   * `prototype/` and `HANDOVER.md` are no longer listed, they live outside of the repository now.
   * `.idea/` stays ignored and `.vscode/` is ignored as well, so IDE settings of contributors never reach a commit.
+* [DOCS] Describe the versions and branches in the README
+  * A compatibility table names the branch, state, version, PHPUnit and PHP range of every package major, as in
+    deepltranslate-core, next to badges and the URLs of the repository, Packagist, issues and releases.
+  * The installation names the constraint for each PHPUnit major.
