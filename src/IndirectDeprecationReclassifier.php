@@ -14,7 +14,8 @@ use PHPUnit\TextUI\Configuration\SourceFilter;
 
 /**
  * Reports an indirect deprecation again as a direct one when first-party or test code caused it through
- * pass-through code. Used by {@see Extension} before PHPUnit 13.1, which offers no issue trigger resolvers.
+ * pass-through code, generated code, or as its message names. Used by {@see Extension} before PHPUnit 13.1, which
+ * offers no issue trigger resolvers.
  *
  * Subscribers are notified synchronously from PHPUnit's error handler, so the stack that triggered the
  * deprecation is still available.
@@ -33,6 +34,7 @@ final readonly class IndirectDeprecationReclassifier implements DeprecationTrigg
         }
         $causingFile = $this->causingFileLocator->causingFile(
             $this->errorHandlerTrace->cut(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)),
+            $event->message(),
         );
         $caller = $causingFile === null ? null : $this->categorize($causingFile, $event->test());
         if ($caller === null || !$caller->isFirstPartyOrTest()) {

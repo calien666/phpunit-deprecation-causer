@@ -17,4 +17,9 @@ final class ThirdPartyCode
     {
         new DeprecatedService();
     }
+
+    public function migrateConfiguration(string $item): void
+    {
+        (new ConfigurationMigration())->migrate($item);
+    }
 }
