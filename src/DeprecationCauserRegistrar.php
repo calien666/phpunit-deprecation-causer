@@ -19,18 +19,20 @@ final class DeprecationCauserRegistrar
 {
     /**
      * @param list<GeneratedFileMapper> $generatedFileMappers
+     * @param list<MessageCauseResolver> $messageCauseResolvers
      */
     public function register(
         Configuration $configuration,
         Facade $facade,
         PassThroughPaths $passThroughPaths,
         array $generatedFileMappers = [],
+        array $messageCauseResolvers = [],
     ): void {
         if (!$configuration->source()->ignoreIndirectDeprecations()) {
             return;
         }
         $facade->registerSubscriber(new IndirectDeprecationReclassifier(
-            new CausingFileLocator($passThroughPaths, $generatedFileMappers),
+            new CausingFileLocator($passThroughPaths, $generatedFileMappers, $messageCauseResolvers),
             new ErrorHandlerTrace($configuration->source()->deprecationTriggers()),
         ));
     }
