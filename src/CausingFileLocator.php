@@ -22,15 +22,30 @@ final readonly class CausingFileLocator
      */
     public function causingFile(array $trace): ?string
     {
-        if (!$this->passThroughPaths->matches($trace[1]['file'] ?? '')) {
+        if (!$this->isPassThrough($trace, 1)) {
             return null;
         }
-        foreach (array_slice($trace, 2) as $frame) {
-            $file = $frame['file'] ?? '';
-            if ($file !== '' && !$this->passThroughPaths->matches($file)) {
+        for ($position = 2; $position < count($trace); $position++) {
+            $file = $trace[$position]['file'] ?? '';
+            if ($file !== '' && !$this->isPassThrough($trace, $position)) {
                 return $file;
             }
         }
         return null;
+    }
+
+    /**
+     * The code of a frame runs inside the function of the next frame, so a frame is pass-through code when its file
+     * matches, or when the function it runs in is a pass-through method.
+     *
+     * @param list<StackFrame> $trace
+     */
+    private function isPassThrough(array $trace, int $position): bool
+    {
+        if ($this->passThroughPaths->matches($trace[$position]['file'] ?? '')) {
+            return true;
+        }
+        $enclosing = $trace[$position + 1] ?? null;
+        return $enclosing !== null && $this->passThroughPaths->matchesMethod($enclosing['class'] ?? null, $enclosing['function']);
     }
 }
