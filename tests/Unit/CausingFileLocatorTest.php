@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Calien\PhpUnitDeprecationCauser\Tests\Unit;
 
 use Calien\PhpUnitDeprecationCauser\CausingFileLocator;
+use Calien\PhpUnitDeprecationCauser\GeneratedFileMapper;
 use Calien\PhpUnitDeprecationCauser\PassThroughPaths;
 use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -64,6 +65,53 @@ final class CausingFileLocatorTest extends TestCase
             'trace' => [
                 ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
                 ['function' => '__construct', 'class' => 'Acme\\Lib\\Deprecated', 'file' => '/app/vendor/acme/testing/src/TestCase.php'],
+            ],
+            'expected' => null,
+        ];
+    }
+
+    /**
+     * @param list<StackFrame> $trace
+     */
+    #[Test]
+    #[DataProvider('generatedFileTraceProvider')]
+    public function mapsGeneratedFilesToTheirSource(array $trace, ?string $expected): void
+    {
+        $mapper = new class implements GeneratedFileMapper {
+            public function sourceFile(string $file, int $line): ?string
+            {
+                if ($file !== '/app/var/cache/compiled.php') {
+                    return null;
+                }
+                return $line < 100 ? '/app/src/first.php' : '/app/src/second.php';
+            }
+        };
+        $subject = new CausingFileLocator(new PassThroughPaths(['/vendor/acme/container/']), [$mapper]);
+
+        self::assertSame($expected, $subject->causingFile($trace));
+    }
+
+    public static function generatedFileTraceProvider(): Generator
+    {
+        yield 'generated caller' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
+                ['function' => 'deprecated', 'file' => '/app/var/cache/compiled.php', 'line' => 120],
+            ],
+            'expected' => '/app/src/second.php',
+        ];
+        yield 'generated file behind pass-through code' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
+                ['function' => '__construct', 'file' => '/app/vendor/acme/container/Container.php'],
+                ['function' => 'get', 'file' => '/app/var/cache/compiled.php', 'line' => 12],
+            ],
+            'expected' => '/app/src/first.php',
+        ];
+        yield 'caller not generated' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
+                ['function' => 'deprecated', 'file' => '/app/vendor/acme/lib/Other.php', 'line' => 12],
             ],
             'expected' => null,
         ];

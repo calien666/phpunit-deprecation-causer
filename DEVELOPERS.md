@@ -52,6 +52,9 @@ PHPUnit process, with one of the configurations in `tests/EndToEnd/Fixtures/`:
 | `ignoring-indirect-without-extension.xml` | Reproduces the suppressed deprecations without the extension     |
 | `reporting-indirect.xml`                  | Proves nothing is reported twice when PHPUnit reports everything |
 | `missing-pass-through-paths.xml`          | A registration without paths fails the run                       |
+| `integration.xml`                         | A framework integration through `DeprecationCauserRegistrar`     |
 
 `Fixtures/Project/` is first-party code, `Fixtures/ThirdParty/` third-party code, and
-`Fixtures/ThirdParty/Infrastructure/` the pass-through code of those configurations.
+`Fixtures/ThirdParty/Infrastructure/` the pass-through code of those configurations. `Fixtures/Integration/` holds
+the framework integration of `integration.xml`, and `Fixtures/Generated/` the generated code it maps back to
+first-party code.

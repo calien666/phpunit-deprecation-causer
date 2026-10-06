@@ -129,6 +129,10 @@ final class AcmeFrameworkExtension implements Extension
 }
 ```
 
+When a framework executes project code from files it generated, such as a cache file concatenating configuration
+files of several packages, the integration passes a `GeneratedFileMapper` as fourth argument. It maps such a file and
+line back to the file the code came from, and PHPUnit then classifies that file.
+
 ## Limitations
 
 - **Resolution started by third-party code** is not attributed: when a framework instantiates your service and that

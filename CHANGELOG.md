@@ -52,3 +52,8 @@
 * [FEATURE] Treat single methods as pass-through code
   * An entry `Fqcn::method` in the pass-through paths names one method instead of a whole file; only frames running
     inside that method are skipped, so other code of the same file keeps its own classification.
+* [FEATURE] Map generated files back to their source
+  * `GeneratedFileMapper` lets a framework integration map a generated file and line, such as a concatenated cache
+    file, back to the file the code came from; `DeprecationCauserRegistrar::register()` takes the mappers as optional
+    fourth argument. A generated caller or a generated file behind pass-through code is then classified as its
+    source.
