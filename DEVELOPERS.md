@@ -57,4 +57,5 @@ PHPUnit process, with one of the configurations in `tests/EndToEnd/Fixtures/`:
 `Fixtures/Project/` is first-party code, `Fixtures/ThirdParty/` third-party code, and
 `Fixtures/ThirdParty/Infrastructure/` the pass-through code of those configurations. `Fixtures/Integration/` holds
 the framework integration of `integration.xml`, and `Fixtures/Generated/` the generated code it maps back to
-first-party code.
+first-party code. Its message resolver attributes configuration migrations to `Fixtures/Project/Configuration/` and
+leaves those of `Fixtures/ThirdParty/Configuration/` suppressed.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\Integration;
 
 use Calien\PhpUnitDeprecationCauser\DeprecationCauserRegistrar;
+use Calien\PhpUnitDeprecationCauser\FirstPartyCode;
 use Calien\PhpUnitDeprecationCauser\PassThroughPaths;
 use PHPUnit\Runner\Extension\Extension;
 use PHPUnit\Runner\Extension\Facade;
@@ -23,6 +24,7 @@ final class IntegrationExtension implements Extension
             $facade,
             new PassThroughPaths(['/Fixtures/ThirdParty/Infrastructure/']),
             [new GeneratedFixtureMapper()],
+            [new ConfigurationMessageResolver(FirstPartyCode::fromConfiguration($configuration))],
         );
     }
 }

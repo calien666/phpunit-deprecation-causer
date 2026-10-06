@@ -86,6 +86,14 @@ final class ExtensionTest extends TestCase
             'scenario' => 'thirdPartyInstantiatesDeprecatedThroughContainer',
             'expectedDeprecations' => 0,
         ];
+        yield 'message naming first-party configuration' => [
+            'scenario' => 'thirdPartyMigratesProjectConfiguration',
+            'expectedDeprecations' => 1,
+        ];
+        yield 'message naming third-party configuration' => [
+            'scenario' => 'thirdPartyMigratesVendorConfiguration',
+            'expectedDeprecations' => 0,
+        ];
     }
 
     #[Test]
