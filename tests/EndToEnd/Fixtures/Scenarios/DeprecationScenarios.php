@@ -8,6 +8,7 @@ use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\Generated\GeneratedP
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\Project\ProjectCode;
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\DeprecatedService;
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\Infrastructure\Container;
+use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\ThirdPartyCode;
 use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -79,6 +80,20 @@ final class DeprecationScenarios extends TestCase
     {
         $this->expectNotToPerformAssertions();
         (new GeneratedProjectCode())->instantiateDeprecatedDirectly();
+    }
+
+    #[Test]
+    public function thirdPartyMigratesProjectConfiguration(): void
+    {
+        $this->expectNotToPerformAssertions();
+        (new ThirdPartyCode())->migrateConfiguration('project-item');
+    }
+
+    #[Test]
+    public function thirdPartyMigratesVendorConfiguration(): void
+    {
+        $this->expectNotToPerformAssertions();
+        (new ThirdPartyCode())->migrateConfiguration('vendor-item');
     }
 
     #[Test]

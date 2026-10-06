@@ -56,3 +56,8 @@
     file, back to the file the code came from; `DeprecationCauserRegistrar::register()` takes the mappers as optional
     fourth argument. A generated caller or a generated file behind pass-through code is then classified as its
     source.
+* [FEATURE] Attribute deprecations by their message
+  * `MessageCauseResolver` lets a framework integration name the causing file from the message of a deprecation that
+    carries no frame of the project, such as a migration of project configuration; `DeprecationCauserRegistrar`
+    takes the resolvers as optional fifth argument and asks them when the stack names no cause.
+  * `FirstPartyCode` gives such a resolver the `<source>` directories and tells whether a file is first-party code.
