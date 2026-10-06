@@ -1,2 +1,8 @@
 includes:
 	- ../phpstan.base.neon
+
+# From PHPUnit 13.1 on the issue trigger resolver replaces the subscriber, which emits events in the shape of
+# older majors.
+parameters:
+	excludePaths:
+		- ../../../src/IndirectDeprecationReclassifier.php

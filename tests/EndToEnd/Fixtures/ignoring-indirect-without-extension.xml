@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="../../../vendor/phpunit/phpunit/phpunit.xsd"
+  bootstrap="../../../vendor/autoload.php"
+  cacheDirectory="../../../.cache/phpunit-fixtures"
+  colors="false"
+  failOnDeprecation="true"
+>
+  <testsuites>
+    <testsuite name="Scenarios">
+      <directory suffix="Scenarios.php">Scenarios/</directory>
+    </testsuite>
+  </testsuites>
+  <source ignoreIndirectDeprecations="true">
+    <include>
+      <directory>Project/</directory>
+    </include>
+    <deprecationTrigger>
+      <method>Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\DeprecationHelper::trigger</method>
+    </deprecationTrigger>
+  </source>
+</phpunit>
