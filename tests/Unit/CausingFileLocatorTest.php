@@ -30,6 +30,45 @@ final class CausingFileLocatorTest extends TestCase
         self::assertSame($expected, $subject->causingFile($trace));
     }
 
+    /**
+     * @param list<StackFrame> $trace
+     */
+    #[Test]
+    #[DataProvider('methodTraceProvider')]
+    public function findsFileBehindPassThroughMethods(array $trace, ?string $expected): void
+    {
+        $subject = new CausingFileLocator(new PassThroughPaths(['Acme\\Testing\\TestCase::get']));
+
+        self::assertSame($expected, $subject->causingFile($trace));
+    }
+
+    public static function methodTraceProvider(): Generator
+    {
+        yield 'file behind a frame executing inside a pass-through method' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
+                ['function' => '__construct', 'class' => 'Acme\\Lib\\Deprecated', 'file' => '/app/vendor/acme/testing/src/TestCase.php'],
+                ['function' => 'get', 'class' => 'Acme\\Testing\\TestCase', 'file' => '/app/tests/ProjectTest.php'],
+            ],
+            'expected' => '/app/tests/ProjectTest.php',
+        ];
+        yield 'other method of the same file is not pass-through code' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
+                ['function' => '__construct', 'class' => 'Acme\\Lib\\Deprecated', 'file' => '/app/vendor/acme/testing/src/TestCase.php'],
+                ['function' => 'setUp', 'class' => 'Acme\\Testing\\TestCase', 'file' => '/app/tests/AbstractProjectTestCase.php'],
+            ],
+            'expected' => null,
+        ];
+        yield 'last frame without enclosing method' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
+                ['function' => '__construct', 'class' => 'Acme\\Lib\\Deprecated', 'file' => '/app/vendor/acme/testing/src/TestCase.php'],
+            ],
+            'expected' => null,
+        ];
+    }
+
     public static function traceProvider(): Generator
     {
         yield 'caller is not pass-through code' => [
