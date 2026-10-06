@@ -20,12 +20,18 @@ final class DeprecationCauserRegistrar
     /**
      * The facade is unused with PHPUnit 13; the signature is the same for every supported PHPUnit major, so an
      * integration calls it alike.
+     *
+     * @param list<GeneratedFileMapper> $generatedFileMappers
      */
-    public function register(Configuration $configuration, Facade $facade, PassThroughPaths $passThroughPaths): void
-    {
+    public function register(
+        Configuration $configuration,
+        Facade $facade,
+        PassThroughPaths $passThroughPaths,
+        array $generatedFileMappers = [],
+    ): void {
         if (!$configuration->source()->ignoreIndirectDeprecations()) {
             return;
         }
-        IssueTriggerResolver::register(new CausingFileLocator($passThroughPaths));
+        IssueTriggerResolver::register(new CausingFileLocator($passThroughPaths, $generatedFileMappers));
     }
 }
