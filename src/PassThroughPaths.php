@@ -7,10 +7,11 @@ namespace Calien\PhpUnitDeprecationCauser;
 use PHPUnit\Runner\Extension\ParameterCollection;
 
 /**
- * Files that only call code on behalf of their caller, such as a factory or a dependency injection container.
- * A path matches when it contains one of the fragments.
+ * Code that only calls code on behalf of its caller, such as a factory or a dependency injection container.
+ * A path matches when it contains one of the fragments. An entry `Fqcn::method` names a single method instead of a
+ * whole file, for files that also contain code of their own.
  *
- * Framework integrations ship their own fragments and merge them with the configured ones.
+ * Framework integrations ship their own entries and merge them with the configured ones.
  */
 final readonly class PassThroughPaths
 {
@@ -47,7 +48,20 @@ final readonly class PassThroughPaths
     {
         $file = str_replace('\\', '/', $file);
         foreach ($this->fragments as $fragment) {
-            if (str_contains($file, $fragment)) {
+            if (!str_contains($fragment, '::') && str_contains($file, $fragment)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function matchesMethod(?string $class, string $function): bool
+    {
+        if ($class === null) {
+            return false;
+        }
+        foreach ($this->fragments as $fragment) {
+            if (ltrim($fragment, '\\') === $class . '::' . $function) {
                 return true;
             }
         }
