@@ -24,3 +24,7 @@
   * `DeprecationCauserRegistrar` is the entry point for framework integrations with their own PHPUnit extension.
   * Supports PHPUnit `^11.5.54 || ^12.5.13 || ^13.0.4`, the first releases of each major with the issue trigger
     API the extension builds on.
+* [TASK] Run the test matrix in GitHub Actions
+  * Every push and pull request runs code style, linting, composer validation and the BOM check, and the tests for
+    the lowest and the newest release of PHPUnit 11, 12 and 13, plus each major on PHP 8.5.
+  * `-s composerUpdateMin` installs the lowest releases of the selected PHPUnit major.

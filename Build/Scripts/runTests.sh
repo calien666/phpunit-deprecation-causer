@@ -16,7 +16,7 @@ printSummary() {
     echo "Container runtime: ${CONTAINER_BIN}" >&2
     echo "Container suffix: ${SUFFIX}"
     echo "PHP: ${PHP_VERSION}" >&2
-    if [[ ${TEST_SUITE} =~ ^(composerUpdate)$ ]]; then
+    if [[ ${TEST_SUITE} =~ ^(composerUpdate|composerUpdateMin)$ ]]; then
         echo "PHPUnit: ${PHPUNIT_VERSION}" >&2
     fi
     if [[ ${SUITE_EXIT_CODE} -eq 0 ]]; then
@@ -78,6 +78,7 @@ Options:
             - composerInstallMax: "composer update", with no platform.php config
             - composerInstallMin: "composer update --prefer-lowest", with platform.php set to PHP version x.x.0
             - composerUpdate: "composer update" with PHPUnit restricted to the major selected with -U
+            - composerUpdateMin: like composerUpdate, with the lowest releases ("--prefer-lowest")
             - composerValidate: "composer validate"
             - lintPhp: PHP linting
             - phpstan: phpstan analyze
@@ -97,7 +98,7 @@ Options:
             - 8.5: use PHP 8.5
 
     -U <11|12|13>
-        Only with -s composerUpdate
+        Only with -s composerUpdate|composerUpdateMin
         Specifies the PHPUnit major version to install
             - 11 (default): PHPUnit 11, PHP 8.2 and above
             - 12: PHPUnit 12, PHP 8.3 and above
@@ -345,6 +346,12 @@ case ${TEST_SUITE} in
         rm -rf bin/ vendor/ composer.lock
         COMMAND=(composer update --no-progress --no-interaction --with-all-dependencies --with "phpunit/phpunit:^${PHPUNIT_VERSION}")
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer ${IMAGE_PHP} "${COMMAND[@]}"
+        SUITE_EXIT_CODE=$?
+        ;;
+    composerUpdateMin)
+        rm -rf bin/ vendor/ composer.lock
+        COMMAND=(composer update --prefer-lowest --no-progress --no-interaction --with-all-dependencies --with "phpunit/phpunit:^${PHPUNIT_VERSION}")
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-min-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer ${IMAGE_PHP} "${COMMAND[@]}"
         SUITE_EXIT_CODE=$?
         ;;
     composerValidate)
