@@ -34,3 +34,11 @@
   * `DEVELOPERS.md` covers the runner, the test matrix, how both PHPUnit paths work and the end-to-end fixtures.
 * [TASK] Add the GPL-2.0 license text
   * `LICENSE` carries the full license text for the `GPL-2.0-or-later` declared in `composer.json`.
+* [TASK] Restrict the 13.x line to PHPUnit 13.1 and PHP 8.4
+  * Every package major now supports one PHPUnit major: 13.x on `main`, 12.x and 11.x on the branches `12` and `11`.
+  * Requires PHPUnit `^13.1` and PHP `^8.4`; the subscriber that reported deprecations again for releases before
+    PHPUnit 13.1 is removed, the issue trigger resolver is the only path.
+  * `runTests.sh` drops the PHPUnit major switch `-U`, PHPStan uses a single configuration, and the workflow
+    `testphpunit13.yml` runs on pull requests with the lowest and newest dependencies on PHP 8.4 and the newest on
+    PHP 8.5. `testphpunit11.yml` and `testphpunit12.yml` are dummies on `main`; their real counterparts live on the
+    version branches.

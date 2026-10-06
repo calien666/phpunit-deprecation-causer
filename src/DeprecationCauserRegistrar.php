@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Calien\PhpUnitDeprecationCauser;
 
 use PHPUnit\Runner\Extension\Facade;
-use PHPUnit\Runner\IssueTriggerResolver\Resolver;
 use PHPUnit\TextUI\Configuration\Configuration;
 
 /**
@@ -18,19 +17,15 @@ use PHPUnit\TextUI\Configuration\Configuration;
  */
 final class DeprecationCauserRegistrar
 {
+    /**
+     * The facade is unused with PHPUnit 13; the signature is the same for every supported PHPUnit major, so an
+     * integration calls it alike.
+     */
     public function register(Configuration $configuration, Facade $facade, PassThroughPaths $passThroughPaths): void
     {
         if (!$configuration->source()->ignoreIndirectDeprecations()) {
             return;
         }
-        $causingFileLocator = new CausingFileLocator($passThroughPaths);
-        if (interface_exists(Resolver::class)) {
-            IssueTriggerResolver::register($causingFileLocator);
-            return;
-        }
-        $facade->registerSubscriber(new IndirectDeprecationReclassifier(
-            $causingFileLocator,
-            new ErrorHandlerTrace($configuration->source()->deprecationTriggers()),
-        ));
+        IssueTriggerResolver::register(new CausingFileLocator($passThroughPaths));
     }
 }

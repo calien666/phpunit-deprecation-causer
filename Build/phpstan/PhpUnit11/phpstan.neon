@@ -1,7 +1,0 @@
-includes:
-	- ../phpstan.base.neon
-
-# The issue trigger resolver interface exists from PHPUnit 13.1 on.
-parameters:
-	excludePaths:
-		- ../../../src/IssueTriggerResolver.php

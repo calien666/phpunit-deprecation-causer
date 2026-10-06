@@ -1,0 +1,69 @@
+name: tests phpunit 13
+
+# Every "runTests.sh" call below passes "-b docker". The script prefers podman
+# whenever it is present and only falls back to docker, which is the right
+# default for it -- but GitHub hosted runners ship both, and their podman/crun
+# combination intermittently aborts the first container start of a job with
+# "OCI runtime error: crun: unknown version specified" (exit code 126).
+# Selecting docker here avoids crun entirely and leaves the script default and
+# local runs untouched. Drop the flag once GitHub stops producing the mismatch.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    name: "code quality with phpunit 13"
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: [ '8.4' ]
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v6
+
+      - name: "Prepare dependencies"
+        run: "Build/Scripts/runTests.sh -b docker -p ${{ matrix.php-version }} -s composerUpdate"
+
+      - name: "Validate composer.json"
+        run: "Build/Scripts/runTests.sh -b docker -p ${{ matrix.php-version }} -s composerValidate"
+
+      - name: "Run PHP lint"
+        run: "Build/Scripts/runTests.sh -b docker -p ${{ matrix.php-version }} -s lintPhp"
+
+      - name: "Validate CGL"
+        run: "Build/Scripts/runTests.sh -b docker -p ${{ matrix.php-version }} -s cgl -n"
+
+      - name: "Ensure UTF-8 files do not contain BOM"
+        run: "Build/Scripts/runTests.sh -b docker -p ${{ matrix.php-version }} -s checkBom"
+
+      - name: "Run PHPStan"
+        run: "Build/Scripts/runTests.sh -b docker -p ${{ matrix.php-version }} -s phpstan"
+
+  testsuite:
+    name: all tests with phpunit 13
+    runs-on: ubuntu-22.04
+    needs: code-quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php-version: '8.4', dependencies: 'lowest' }
+          - { php-version: '8.4', dependencies: 'highest' }
+          - { php-version: '8.5', dependencies: 'highest' }
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v6
+
+      - name: "Prepare highest dependencies"
+        if: matrix.dependencies == 'highest'
+        run: "Build/Scripts/runTests.sh -b docker -p ${{ matrix.php-version }} -s composerUpdate"
+
+      - name: "Prepare lowest dependencies"
+        if: matrix.dependencies == 'lowest'
+        run: "Build/Scripts/runTests.sh -b docker -p ${{ matrix.php-version }} -s composerUpdateMin"
+
+      - name: "Unit and end-to-end"
+        run: "Build/Scripts/runTests.sh -b docker -p ${{ matrix.php-version }} -s unit"

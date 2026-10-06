@@ -16,9 +16,6 @@ printSummary() {
     echo "Container runtime: ${CONTAINER_BIN}" >&2
     echo "Container suffix: ${SUFFIX}"
     echo "PHP: ${PHP_VERSION}" >&2
-    if [[ ${TEST_SUITE} =~ ^(composerUpdate|composerUpdateMin)$ ]]; then
-        echo "PHPUnit: ${PHPUNIT_VERSION}" >&2
-    fi
     if [[ ${SUITE_EXIT_CODE} -eq 0 ]]; then
         echo "SUCCESS" >&2
     else
@@ -44,12 +41,6 @@ cleanUp() {
 
 getPhpImageVersion() {
     case ${1} in
-        8.2)
-            echo -n "1.15"
-            ;;
-        8.3)
-            echo -n "1.16"
-            ;;
         8.4)
             echo -n "1.8"
             ;;
@@ -77,8 +68,8 @@ Options:
             - composerInstall: "composer install"
             - composerInstallMax: "composer update", with no platform.php config
             - composerInstallMin: "composer update --prefer-lowest", with platform.php set to PHP version x.x.0
-            - composerUpdate: "composer update" with PHPUnit restricted to the major selected with -U
-            - composerUpdateMin: like composerUpdate, with the lowest releases ("--prefer-lowest")
+            - composerUpdate: "composer update"
+            - composerUpdateMin: "composer update --prefer-lowest"
             - composerValidate: "composer validate"
             - lintPhp: PHP linting
             - phpstan: phpstan analyze
@@ -90,19 +81,10 @@ Options:
             - podman (default)
             - docker
 
-    -p <8.2|8.3|8.4|8.5>
+    -p <8.4|8.5>
         Specifies the PHP minor version to be used
-            - 8.2 (default): use PHP 8.2
-            - 8.3: use PHP 8.3
-            - 8.4: use PHP 8.4
+            - 8.4 (default): use PHP 8.4
             - 8.5: use PHP 8.5
-
-    -U <11|12|13>
-        Only with -s composerUpdate|composerUpdateMin
-        Specifies the PHPUnit major version to install
-            - 11 (default): PHPUnit 11, PHP 8.2 and above
-            - 12: PHPUnit 12, PHP 8.3 and above
-            - 13: PHPUnit 13, PHP 8.4 and above
 
     -x
         Only with -s unit|unitRandom
@@ -133,16 +115,16 @@ Options:
         Show this help.
 
 Examples:
-    # Run all unit and end-to-end tests using PHP 8.2 against PHPUnit 11
-    ./Build/Scripts/runTests.sh -s composerUpdate -U 11
+    # Run all unit and end-to-end tests using PHP 8.4
+    ./Build/Scripts/runTests.sh -s composerUpdate
     ./Build/Scripts/runTests.sh -s unit
 
-    # Run the tests using PHP 8.4 against PHPUnit 13
-    ./Build/Scripts/runTests.sh -p 8.4 -s composerUpdate -U 13
-    ./Build/Scripts/runTests.sh -p 8.4 -s unit
+    # Run the tests against the lowest dependencies using PHP 8.5
+    ./Build/Scripts/runTests.sh -p 8.5 -s composerUpdateMin
+    ./Build/Scripts/runTests.sh -p 8.5 -s unit
 
     # Run a single test file
-    ./Build/Scripts/runTests.sh -s unit tests/Unit/CausingFrameLocatorTest.php
+    ./Build/Scripts/runTests.sh -s unit tests/Unit/CausingFileLocatorTest.php
 EOF
 }
 
@@ -161,8 +143,7 @@ ROOT_DIR="${PWD}"
 
 # Default variables
 TEST_SUITE="unit"
-PHP_VERSION="8.2"
-PHPUNIT_VERSION="11"
+PHP_VERSION="8.4"
 PHP_XDEBUG_ON=0
 PHP_XDEBUG_PORT=9003
 CGLCHECK_DRY_RUN=""
@@ -182,7 +163,7 @@ OPTIND=1
 # Array for invalid options
 INVALID_OPTIONS=()
 # Simple option parsing based on getopts (! not getopt)
-while getopts ":b:s:p:U:o:xy:nhu" OPT; do
+while getopts ":b:s:p:o:xy:nhu" OPT; do
     case ${OPT} in
         s)
             TEST_SUITE=${OPTARG}
@@ -195,13 +176,7 @@ while getopts ":b:s:p:U:o:xy:nhu" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
-            if ! [[ ${PHP_VERSION} =~ ^(8.2|8.3|8.4|8.5)$ ]]; then
-                INVALID_OPTIONS+=("${OPTARG}")
-            fi
-            ;;
-        U)
-            PHPUNIT_VERSION=${OPTARG}
-            if ! [[ ${PHPUNIT_VERSION} =~ ^(11|12|13)$ ]]; then
+            if ! [[ ${PHP_VERSION} =~ ^(8.4|8.5)$ ]]; then
                 INVALID_OPTIONS+=("${OPTARG}")
             fi
             ;;
@@ -342,15 +317,14 @@ case ${TEST_SUITE} in
         SUITE_EXIT_CODE=$?
         ;;
     composerUpdate)
-        # "--with" narrows the PHPUnit constraint for this resolution only, composer.json keeps the spanning one.
         rm -rf bin/ vendor/ composer.lock
-        COMMAND=(composer update --no-progress --no-interaction --with-all-dependencies --with "phpunit/phpunit:^${PHPUNIT_VERSION}")
+        COMMAND=(composer update --no-progress --no-interaction)
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer ${IMAGE_PHP} "${COMMAND[@]}"
         SUITE_EXIT_CODE=$?
         ;;
     composerUpdateMin)
         rm -rf bin/ vendor/ composer.lock
-        COMMAND=(composer update --prefer-lowest --no-progress --no-interaction --with-all-dependencies --with "phpunit/phpunit:^${PHPUNIT_VERSION}")
+        COMMAND=(composer update --prefer-lowest --no-progress --no-interaction)
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-min-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer ${IMAGE_PHP} "${COMMAND[@]}"
         SUITE_EXIT_CODE=$?
         ;;
@@ -364,14 +338,7 @@ case ${TEST_SUITE} in
         SUITE_EXIT_CODE=$?
         ;;
     phpstan)
-        # The analysed code differs per PHPUnit major, so the configuration follows the installed one.
-        INSTALLED_PHPUNIT=$(grep -A1 '"name": "phpunit/phpunit"' vendor/composer/installed.json 2>/dev/null | sed -n 's/.*"version": "v\{0,1\}\([0-9]*\)\..*/\1/p')
-        if [ -z "${INSTALLED_PHPUNIT}" ]; then
-            echo "PHPUnit is not installed, run \"Build/Scripts/runTests.sh -s composerUpdate\" first." >&2
-            SUITE_EXIT_CODE=1
-            printSummary
-        fi
-        COMMAND=(php -dxdebug.mode=off bin/phpstan analyse -c Build/phpstan/PhpUnit${INSTALLED_PHPUNIT}/phpstan.neon --verbose --no-interaction --memory-limit 4G "$@")
+        COMMAND=(php -dxdebug.mode=off bin/phpstan analyse -c Build/phpstan/phpstan.neon --verbose --no-interaction --memory-limit 4G "$@")
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name phpstan-${SUFFIX} ${IMAGE_PHP} "${COMMAND[@]}"
         SUITE_EXIT_CODE=$?
         ;;

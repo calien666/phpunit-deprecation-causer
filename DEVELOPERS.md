@@ -3,49 +3,43 @@
 Everything runs in the TYPO3 core-testing containers through `Build/Scripts/runTests.sh`; no PHP or Composer is
 needed on the host. `Build/Scripts/runTests.sh -h` lists all suites and options.
 
-## Installing a PHPUnit major
+## Branches
 
-The extension is tested against PHPUnit 11, 12 and 13. Install the major to work on, with a matching PHP version:
+Every major of the package supports one PHPUnit major and lives on its own branch: `main` is 13.x for PHPUnit 13,
+`12` and `11` are the branches for PHPUnit 12 and 11. Changes reach every branch through pull requests only; they need
+an approving review and passing checks, and are merged by rebase. A fix for all majors goes to `main` first and is
+backported to `12` and `11` in pull requests of their own.
+
+## Installing dependencies
 
 ```shell
-Build/Scripts/runTests.sh -p 8.2 -U 11 -s composerUpdate
-Build/Scripts/runTests.sh -p 8.3 -U 12 -s composerUpdate
-Build/Scripts/runTests.sh -p 8.4 -U 13 -s composerUpdate
+Build/Scripts/runTests.sh -s composerUpdate
 ```
 
-`-s composerUpdateMin` installs the lowest supported release of the major instead. `composer.json` keeps its
-spanning constraint either way.
+`-s composerUpdateMin` installs the lowest supported releases instead.
 
 ## Suites
 
 | Suite                                  | What it runs                                                           |
 | :------------------------------------- | :--------------------------------------------------------------------- |
 | `-s unit`                              | Unit tests and end-to-end tests                                        |
-| `-s phpstan`                           | PHPStan, with the configuration of the installed PHPUnit major         |
+| `-s phpstan`                           | PHPStan                                                                |
 | `-s cgl` (`-n` for a dry run)          | php-cs-fixer with the TYPO3 core rule set                              |
 | `-s lintPhp`                           | PHP syntax check                                                       |
 | `-s composerValidate`, `-s checkBom`   | Integrity checks                                                       |
 
 Pass options for PHPUnit or PHPStan after `--`, for instance `Build/Scripts/runTests.sh -s unit -- --filter Helper`.
 
-The CI workflow runs the lowest and the newest release of every major, and every major on PHP 8.5. A change counts
-as done when those lanes pass; PHPStan runs on the newest releases only.
+The CI workflow runs the lowest and the newest dependencies on PHP 8.4 and the newest on PHP 8.5. A change counts as
+done when those lanes pass.
 
 ## How it works
 
 PHPUnit's error handler classifies a userland deprecation by frame 0 (the file that triggered it) and frame 1 (the
 file that called into it). `CausingFileLocator` returns the first file behind the pass-through frames when frame 1
-is pass-through code. How that file reaches PHPUnit differs per release:
-
-- **PHPUnit 13.1 and later**: `IssueTriggerResolver` implements PHPUnit's issue trigger resolver interface and
-  returns that file as the caller. PHPUnit then classifies it itself.
-- **Before 13.1**: `IndirectDeprecationReclassifier` subscribes to `DeprecationTriggered`. Subscribers are notified
-  synchronously from the error handler, so `ErrorHandlerTrace` can cut the original stack out of
-  `debug_backtrace()`. When the file is first-party or test code, the subscriber emits the deprecation again with
-  a direct trigger through PHPUnit's internal event emitter.
-
-`DeprecationCauserRegistrar` picks the path. The PHPStan configuration of each major excludes the class of the other
-path.
+is pass-through code. `IssueTriggerResolver` implements PHPUnit's issue trigger resolver interface and hands that
+file to PHPUnit as the caller, so PHPUnit classifies it itself. `DeprecationCauserRegistrar` registers the resolver
+in PHPUnit's error handler.
 
 ## End-to-end tests
 
