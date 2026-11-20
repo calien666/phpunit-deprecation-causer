@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Calien\PhpUnitDeprecationCauser\Tests\Unit;
 
+use Calien\PhpUnitDeprecationCauser\Cause;
+use Calien\PhpUnitDeprecationCauser\CauseResolver;
 use Calien\PhpUnitDeprecationCauser\CausingFileLocator;
 use Calien\PhpUnitDeprecationCauser\GeneratedFileMapper;
-use Calien\PhpUnitDeprecationCauser\MessageCauseResolver;
 use Calien\PhpUnitDeprecationCauser\PassThroughPaths;
 use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -122,13 +123,19 @@ final class CausingFileLocatorTest extends TestCase
      * @param list<StackFrame> $trace
      */
     #[Test]
-    #[DataProvider('messageTraceProvider')]
-    public function asksMessageCauseResolversWhenTheTraceNamesNoCause(array $trace, string $message, ?string $expected): void
+    #[DataProvider('causeTraceProvider')]
+    public function asksCauseResolversBeforeTheTrace(array $trace, string $message, ?string $expected): void
     {
-        $resolver = new class implements MessageCauseResolver {
-            public function causingFile(string $message): ?string
+        $resolver = new class implements CauseResolver {
+            public function cause(array $trace, string $message): ?Cause
             {
-                return str_contains($message, 'project item') ? '/app/config/project.php' : null;
+                if (!str_starts_with($message, 'Migrated')) {
+                    return null;
+                }
+                $item = $trace[1]['args'][0] ?? '';
+                return str_contains($message, 'project item') || $item === 'project-item'
+                    ? Cause::inFile('/app/config/project.php')
+                    : Cause::thirdParty();
             }
         };
         $subject = new CausingFileLocator(new PassThroughPaths(['/vendor/acme/container/']), [], [$resolver]);
@@ -136,7 +143,7 @@ final class CausingFileLocatorTest extends TestCase
         self::assertSame($expected, $subject->causingFile($trace, $message));
     }
 
-    public static function messageTraceProvider(): Generator
+    public static function causeTraceProvider(): Generator
     {
         yield 'message names first-party configuration' => [
             'trace' => [
@@ -146,21 +153,46 @@ final class CausingFileLocatorTest extends TestCase
             'message' => 'Migrated project item.',
             'expected' => '/app/config/project.php',
         ];
-        yield 'message names nothing first-party' => [
+        yield 'argument names first-party configuration' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Migration.php'],
+                ['function' => 'migrate', 'file' => '/app/vendor/acme/lib/Kernel.php', 'args' => ['project-item']],
+            ],
+            'message' => 'Migrated an item.',
+            'expected' => '/app/config/project.php',
+        ];
+        yield 'recognised third-party configuration keeps the triggering file as caller' => [
             'trace' => [
                 ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Migration.php'],
                 ['function' => 'migrate', 'file' => '/app/vendor/acme/lib/Kernel.php'],
             ],
             'message' => 'Migrated vendor item.',
-            'expected' => null,
+            'expected' => '/app/vendor/acme/lib/Migration.php',
         ];
-        yield 'trace names the cause first' => [
+        yield 'recognised third-party configuration wins over a first-party caller' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Migration.php'],
+                ['function' => 'migrate', 'file' => '/app/tests/ProjectTest.php'],
+            ],
+            'message' => 'Migrated vendor item.',
+            'expected' => '/app/vendor/acme/lib/Migration.php',
+        ];
+        yield 'recognised first-party configuration wins over the trace' => [
             'trace' => [
                 ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
                 ['function' => '__construct', 'file' => '/app/vendor/acme/container/Container.php'],
                 ['function' => 'get', 'file' => '/app/src/Project.php'],
             ],
             'message' => 'Migrated project item.',
+            'expected' => '/app/config/project.php',
+        ];
+        yield 'unrecognised message leaves the trace to decide' => [
+            'trace' => [
+                ['function' => 'trigger_error', 'file' => '/app/vendor/acme/lib/Deprecated.php'],
+                ['function' => '__construct', 'file' => '/app/vendor/acme/container/Container.php'],
+                ['function' => 'get', 'file' => '/app/src/Project.php'],
+            ],
+            'message' => 'Deprecated service.',
             'expected' => '/app/src/Project.php',
         ];
     }
@@ -178,12 +210,12 @@ final class CausingFileLocatorTest extends TestCase
                 return $file === '/app/var/cache/compiled.php' && $this->link !== '' ? $this->link : null;
             }
         };
-        $resolver = new class ($link) implements MessageCauseResolver {
+        $resolver = new class ($link) implements CauseResolver {
             public function __construct(private readonly string $link) {}
 
-            public function causingFile(string $message): ?string
+            public function cause(array $trace, string $message): ?Cause
             {
-                return $this->link !== '' ? $this->link : null;
+                return $this->link !== '' && $message !== '' ? Cause::inFile($this->link) : null;
             }
         };
         $subject = new CausingFileLocator(new PassThroughPaths(['/vendor/acme/container/']), [$mapper], [$resolver]);

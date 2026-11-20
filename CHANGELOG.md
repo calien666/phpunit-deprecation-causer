@@ -2,6 +2,12 @@
 
 ### Unreleased
 
+* [!!!][TASK] Let cause resolvers decide before the stack
+  * `CauseResolver` replaces `MessageCauseResolver`. It gets the stack trace, with the arguments of each frame, next
+    to the message, so an integration can tell the cause of a deprecation whose message does not name it.
+  * A resolver that recognises a deprecation answers before the stack is looked at: `Cause::inFile()` names the
+    causing file, `Cause::thirdParty()` keeps a deprecation indirect even when a test or first-party code started
+    it, for instance a migration of third-party configuration a test triggers. `null` leaves the stack to decide.
 * [TASK] Add containerized build and code quality tooling
   * `Build/Scripts/runTests.sh`, modelled on the TYPO3 core runner, runs every suite in the
     `ghcr.io/typo3/core-testing-php*` images: `unit`, `cgl`, `phpstan`, `lintPhp`, `checkBom` and the composer

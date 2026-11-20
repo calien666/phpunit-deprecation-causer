@@ -6,8 +6,8 @@ namespace Calien\PhpUnitDeprecationCauser;
 
 /**
  * Finds the file that caused a deprecation through pass-through code or generated code, in a stack trace as PHPUnit
- * classifies it: frame 0 holds the file that triggered the deprecation, frame 1 the file that called into it. When
- * the stack names no cause, the message resolvers are asked.
+ * classifies it: frame 0 holds the file that triggered the deprecation, frame 1 the file that called into it. The cause
+ * resolvers are asked first; a deprecation none of them recognises is left to the stack.
  *
  * @phpstan-type StackFrame array{function: string, line?: int, file?: string, class?: class-string, type?: '->'|'::', args?: list<mixed>, object?: object}
  */
@@ -15,24 +15,40 @@ final readonly class CausingFileLocator
 {
     /**
      * @param list<GeneratedFileMapper> $generatedFileMappers
-     * @param list<MessageCauseResolver> $messageCauseResolvers
+     * @param list<CauseResolver> $causeResolvers
      */
     public function __construct(
         private PassThroughPaths $passThroughPaths,
         private array $generatedFileMappers = [],
-        private array $messageCauseResolvers = [],
+        private array $causeResolvers = [],
     ) {}
 
     /**
-     * Returns null when neither the stack nor the message names a cause, PHPUnit's own classification applies
-     * then.
+     * Returns null when neither a cause resolver nor the stack names a cause, PHPUnit's own classification applies
+     * then. A third-party cause is returned as the file that triggered the deprecation, which keeps it indirect.
      *
      * @param list<StackFrame> $trace
      * @return non-empty-string|null
      */
     public function causingFile(array $trace, string $message = ''): ?string
     {
-        return $this->causingFileOnStack($trace) ?? $this->causingFileInMessage($message);
+        foreach ($this->causeResolvers as $causeResolver) {
+            $cause = $causeResolver->cause($trace, $message);
+            if ($cause !== null) {
+                return $this->causedFile($cause, $trace);
+            }
+        }
+        return $this->causingFileOnStack($trace);
+    }
+
+    /**
+     * @param list<StackFrame> $trace
+     * @return non-empty-string|null
+     */
+    private function causedFile(Cause $cause, array $trace): ?string
+    {
+        $file = $cause->file() ?? $trace[0]['file'] ?? '';
+        return $file === '' ? null : $this->canonicalFile($file);
     }
 
     /**
@@ -48,20 +64,6 @@ final readonly class CausingFileLocator
             $file = $trace[$position]['file'] ?? '';
             if ($file !== '' && !$this->isPassThrough($trace, $position)) {
                 return $this->sourceFile($trace[$position]) ?? $file;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @return non-empty-string|null
-     */
-    private function causingFileInMessage(string $message): ?string
-    {
-        foreach ($this->messageCauseResolvers as $messageCauseResolver) {
-            $causingFile = $messageCauseResolver->causingFile($message);
-            if ($causingFile !== null) {
-                return $this->canonicalFile($causingFile);
             }
         }
         return null;

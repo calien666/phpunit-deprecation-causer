@@ -94,6 +94,18 @@ final class ExtensionTest extends TestCase
             'scenario' => 'thirdPartyMigratesVendorConfiguration',
             'expectedDeprecations' => 0,
         ];
+        yield 'message naming third-party configuration, migrated by the test' => [
+            'scenario' => 'vendorConfigurationMigratedByTheTest',
+            'expectedDeprecations' => 0,
+        ];
+        yield 'argument naming first-party configuration' => [
+            'scenario' => 'thirdPartyMigratesProjectConfigurationNamedByArgument',
+            'expectedDeprecations' => 1,
+        ];
+        yield 'argument naming third-party configuration' => [
+            'scenario' => 'thirdPartyMigratesVendorConfigurationNamedByArgument',
+            'expectedDeprecations' => 0,
+        ];
     }
 
     #[Test]

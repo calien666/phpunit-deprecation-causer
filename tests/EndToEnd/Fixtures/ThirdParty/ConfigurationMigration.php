@@ -14,4 +14,14 @@ final class ConfigurationMigration
     {
         trigger_error(sprintf('Migrated the deprecated option of configuration item \'%s\'.', $item), E_USER_DEPRECATED);
     }
+
+    /**
+     * Names the item only in its argument, not in the message.
+     */
+    public function migrateUnnamed(string $item): void
+    {
+        if ($item !== '') {
+            trigger_error('Migrated the deprecated option of a configuration item.', E_USER_DEPRECATED);
+        }
+    }
 }
