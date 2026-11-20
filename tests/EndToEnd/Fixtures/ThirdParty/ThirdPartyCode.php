@@ -22,4 +22,9 @@ final class ThirdPartyCode
     {
         (new ConfigurationMigration())->migrate($item);
     }
+
+    public function migrateUnnamedConfiguration(string $item): void
+    {
+        (new ConfigurationMigration())->migrateUnnamed($item);
+    }
 }
