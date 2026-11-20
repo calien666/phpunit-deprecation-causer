@@ -133,17 +133,21 @@ When a framework executes project code from files it generated, such as a cache 
 files of several packages, the integration passes a `GeneratedFileMapper` as fourth argument. It maps such a file and
 line back to the file the code came from, and PHPUnit then classifies that file.
 
-Some deprecations name their cause only in the message, for instance when a framework migrates the configuration of
-a project at runtime and no frame of the project is on the stack. A `MessageCauseResolver`, passed as fifth argument,
-names the causing file from the message; `FirstPartyCode::fromConfiguration()` gives it the `<source>` directories
-and tells whether a file belongs to the project, so third-party configuration stays suppressed.
+Some deprecations are about configuration rather than code, for instance when a framework migrates the configuration
+of a project at runtime, and no frame of the project is on the stack then. A `CauseResolver`, passed as fifth
+argument, recognises such a deprecation by its message and by the arguments of the frames that raised it, and answers
+before the stack is looked at: `Cause::inFile()` names the file that caused it, `Cause::thirdParty()` keeps it
+suppressed, and `null` leaves a deprecation it does not recognise to the stack. `FirstPartyCode::fromConfiguration()`
+gives the resolver the `<source>` directories and tells whether a file belongs to the project.
 
 ## Limitations
 
 - **Resolution started by third-party code** is not attributed: when a framework instantiates your service and that
   service needs a deprecated dependency, no frame of your code is on the stack.
 - **Deprecations about configuration**, such as a framework migrating your configuration at runtime, carry no frame
-  of your code either. A framework integration can attribute them with a `MessageCauseResolver`.
+  of your code either. A framework integration can attribute them with a `CauseResolver`.
+- **A migration of third-party configuration started by a test** is reported: PHPUnit classifies it as direct, and
+  a subscriber cannot suppress it again. From PHPUnit 13.1 on, `Cause::thirdParty()` keeps it suppressed.
 - **Native PHP deprecations** (`E_DEPRECATED`) are left to PHPUnit; only `E_USER_DEPRECATED` is handled.
 - **Tests in separate processes** are not covered: the extension is not bootstrapped in the child process.
 - PHPUnit 11 offers no issue trigger resolvers, so the extension reports the deprecation again from an event
