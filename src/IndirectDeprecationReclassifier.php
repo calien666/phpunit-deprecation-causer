@@ -33,7 +33,7 @@ final readonly class IndirectDeprecationReclassifier implements DeprecationTrigg
             return;
         }
         $causingFile = $this->causingFileLocator->causingFile(
-            $this->errorHandlerTrace->cut(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)),
+            $this->errorHandlerTrace->cut(debug_backtrace(0)),
             $event->message(),
         );
         $caller = $causingFile === null ? null : $this->categorize($causingFile, $event->test());

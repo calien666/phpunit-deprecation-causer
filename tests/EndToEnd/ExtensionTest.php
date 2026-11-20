@@ -94,6 +94,20 @@ final class ExtensionTest extends TestCase
             'scenario' => 'thirdPartyMigratesVendorConfiguration',
             'expectedDeprecations' => 0,
         ];
+        // PHPUnit classifies it as direct before the subscriber sees it; only PHPUnit 13.1 and later can keep it
+        // suppressed.
+        yield 'message naming third-party configuration, migrated by the test' => [
+            'scenario' => 'vendorConfigurationMigratedByTheTest',
+            'expectedDeprecations' => 1,
+        ];
+        yield 'argument naming first-party configuration' => [
+            'scenario' => 'thirdPartyMigratesProjectConfigurationNamedByArgument',
+            'expectedDeprecations' => 1,
+        ];
+        yield 'argument naming third-party configuration' => [
+            'scenario' => 'thirdPartyMigratesVendorConfigurationNamedByArgument',
+            'expectedDeprecations' => 0,
+        ];
     }
 
     #[Test]

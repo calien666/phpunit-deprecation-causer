@@ -8,7 +8,7 @@ use PHPUnit\TextUI\Configuration\Configuration;
 use PHPUnit\TextUI\Configuration\SourceFilter;
 
 /**
- * First-party code as the `<source>` configuration of PHPUnit defines it, for a {@see MessageCauseResolver} that
+ * First-party code as the `<source>` configuration of PHPUnit defines it, for a {@see CauseResolver} that
  * looks for files of the project.
  */
 final readonly class FirstPartyCode
