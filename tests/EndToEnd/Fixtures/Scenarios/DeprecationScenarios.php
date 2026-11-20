@@ -6,6 +6,7 @@ namespace Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\Scenarios;
 
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\Generated\GeneratedProjectCode;
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\Project\ProjectCode;
+use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\ConfigurationMigration;
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\DeprecatedService;
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\Infrastructure\Container;
 use Calien\PhpUnitDeprecationCauser\Tests\EndToEnd\Fixtures\ThirdParty\ThirdPartyCode;
@@ -94,6 +95,27 @@ final class DeprecationScenarios extends TestCase
     {
         $this->expectNotToPerformAssertions();
         (new ThirdPartyCode())->migrateConfiguration('vendor-item');
+    }
+
+    #[Test]
+    public function vendorConfigurationMigratedByTheTest(): void
+    {
+        $this->expectNotToPerformAssertions();
+        (new ConfigurationMigration())->migrate('vendor-item');
+    }
+
+    #[Test]
+    public function thirdPartyMigratesProjectConfigurationNamedByArgument(): void
+    {
+        $this->expectNotToPerformAssertions();
+        (new ThirdPartyCode())->migrateUnnamedConfiguration('project-item');
+    }
+
+    #[Test]
+    public function thirdPartyMigratesVendorConfigurationNamedByArgument(): void
+    {
+        $this->expectNotToPerformAssertions();
+        (new ThirdPartyCode())->migrateUnnamedConfiguration('vendor-item');
     }
 
     #[Test]
